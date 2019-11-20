@@ -1,0 +1,38 @@
+{
+  "name": "failraft",
+  "version": "0.0.0",
+  "description": "",
+  "main": "lib/reduxMiddleware.js",
+  "scripts": {
+    "coverage": "nyc --reporter=lcov --reporter=text npm test",
+    "lint": "eslint . && prettier --check '**/*.js'",
+    "test": "mocha"
+  },
+  "keywords": [],
+  "author": "Alex J Burke @alexjeffburke <ajb@one.com>",
+  "repository": "git://github.com/One-com/failraft",
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "failboat": "^3.0.0"
+  },
+  "devDependencies": {
+    "createerror": "^1.1.0",
+    "eslint": "^6.6.0",
+    "eslint-config-prettier": "^6.7.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-mocha": "^6.2.1",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "httperrors": "^2.0.1",
+    "mocha": "^6.2.2",
+    "nyc": "^14.1.1",
+    "prettier": "^1.19.1",
+    "redux": "^3.6.0",
+    "redux-thunk": "^2.3.0",
+    "sinon": "^7.5.0",
+    "unexpected": "^11.8.1",
+    "unexpected-sinon": "^10.11.2"
+  }
+}
