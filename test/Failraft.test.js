@@ -204,4 +204,24 @@ describe("Failraft", () => {
       });
     });
   });
+
+  describe("when creating a middleware", () => {
+    it("should return a middleware", () => {
+      const middleware = new Failraft().createReduxMiddleware();
+
+      expect(middleware, "to be a function");
+    });
+
+    it("should throw a middleware was already created", () => {
+      const failraft = new Failraft();
+      expect(
+        () => {
+          failraft.createReduxMiddleware();
+          failraft.createReduxMiddleware();
+        },
+        "to throw",
+        "Cannot create multiple middleware instances."
+      );
+    });
+  });
 });
