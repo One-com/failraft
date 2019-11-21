@@ -15,7 +15,6 @@ describe("handleError", () => {
   let options;
   let dispatch;
   let store;
-  let handleError;
 
   beforeEach(() => {
     options = {
@@ -30,8 +29,6 @@ describe("handleError", () => {
     };
     store = createStore(state => state, intialState, applyMiddleware(thunk));
     dispatch = sinon.spy(store, "dispatch");
-
-    handleError = createHandleError(options);
   });
 
   describe("with warnings", () => {
@@ -40,9 +37,10 @@ describe("handleError", () => {
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
       );
+      const handleError = createHandleError({ ...options, failraft });
 
       const error = new httpErrors.NotFound();
-      dispatch(handleError(error, failraft));
+      dispatch(handleError(error));
 
       expect(
         options.trackErrorEvent,
@@ -56,10 +54,11 @@ describe("handleError", () => {
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
       );
+      const handleError = createHandleError({ ...options, failraft });
 
       const error = new httpErrors.NotFound();
       error.getTags = () => ["OtherTag"];
-      dispatch(handleError(error, failraft));
+      dispatch(handleError(error));
 
       expect(
         options.trackErrorEvent,
@@ -73,9 +72,10 @@ describe("handleError", () => {
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
       );
-      const error = new httpErrors.NotFound();
+      const handleError = createHandleError({ ...options, failraft });
 
-      dispatch(handleError(error, failraft));
+      const error = new httpErrors.NotFound();
+      dispatch(handleError(error));
 
       expect(options.reportMissingHandler, "was not called");
     });
@@ -83,11 +83,12 @@ describe("handleError", () => {
 
   describe("with a missing handler", () => {
     it("should track an error error", () => {
+      const failraft = new Failraft({}, store);
+      const handleError = createHandleError({ ...options, failraft });
+
       const error = new httpErrors.BadRequest();
       error.getTags = () => ["OtherTag"];
-
-      const failraft = new Failraft({}, store);
-      dispatch(handleError(error, failraft));
+      dispatch(handleError(error));
 
       expect(
         options.trackErrorEvent,
@@ -97,11 +98,12 @@ describe("handleError", () => {
     });
 
     it("should report a missing handler", () => {
+      const failraft = new Failraft({}, store);
+      const handleError = createHandleError({ ...options, failraft });
+
       const error = new httpErrors.BadRequest();
       error.getTags = () => ["OtherTag"];
-
-      const failraft = new Failraft({}, store);
-      dispatch(handleError(error, failraft));
+      dispatch(handleError(error));
 
       expect(
         options.reportMissingHandler,
@@ -118,13 +120,14 @@ describe("handleError", () => {
         { "*": () => ({ type: "@error/CATCH_ALL" }) },
         store
       );
-      handleError = createHandleError({
+      const handleError = createHandleError({
         ...options,
+        failraft,
         determineErrorTags: () => ["UnknownFailure"]
       });
 
       const error = new Error();
-      dispatch(handleError(error, failraft));
+      dispatch(handleError(error));
 
       expect(
         options.trackErrorEvent,
@@ -147,13 +150,14 @@ describe("handleError", () => {
         { "*": () => ({ type: "@error/CATCH_ALL" }) },
         store
       );
-      handleError = createHandleError({
+      const handleError = createHandleError({
         ...options,
+        failraft,
         determineErrorTags: error => [error.name, "AbnormalFailure"]
       });
 
       const error = new TypeError();
-      dispatch(handleError(error, failraft));
+      dispatch(handleError(error));
 
       expect(
         options.trackErrorEvent,
@@ -171,30 +175,36 @@ describe("handleError", () => {
 
   describe("when extending handlers", () => {
     it("should allow them to be supplied as an argument to handleError", () => {
+      const failraft = new Failraft({}, store);
+      const handleError = createHandleError({
+        ...options,
+        failraft
+      });
+
       const error = new httpErrors.NotFound();
       error.getTags = () => ["OtherTag"];
-
       const extendedHandlers = {
         OtherTag: () => ({ type: "@error/OTHER_TAG" })
       };
 
-      const failraft = new Failraft({}, store);
-
-      dispatch(handleError(error, failraft, extendedHandlers), "to be true");
+      dispatch(handleError(error, extendedHandlers), "to be true");
     });
 
     it("should allow them to be supplied by a function on the error", () => {
+      const failraft = new Failraft({}, store);
+      const handleError = createHandleError({
+        ...options,
+        failraft
+      });
+
+      const extendedHandlers = {
+        OtherTag: () => ({ type: "@error/OTHER_TAG" })
+      };
       const error = new httpErrors.NotFound();
       error.getHandlers = () => extendedHandlers;
       error.getTags = () => ["OtherTag"];
 
-      const extendedHandlers = {
-        OtherTag: () => ({ type: "@error/OTHER_TAG" })
-      };
-
-      const failraft = new Failraft({}, store);
-
-      dispatch(handleError(error, failraft), "to be true");
+      dispatch(handleError(error), "to be true");
     });
   });
 });
