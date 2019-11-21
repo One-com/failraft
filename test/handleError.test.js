@@ -36,13 +36,13 @@ describe("handleError", () => {
 
   describe("with warnings", () => {
     it("should issue a warning event if a known failure was handled", () => {
-      const failRaft = new Failraft(
+      const failraft = new Failraft(
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
       );
 
       const error = new httpErrors.NotFound();
-      dispatch(handleError(error, failRaft));
+      dispatch(handleError(error, failraft));
 
       expect(
         options.trackErrorEvent,
@@ -52,14 +52,14 @@ describe("handleError", () => {
     });
 
     it("should issue a warning event even without additional tags", () => {
-      const failRaft = new Failraft(
+      const failraft = new Failraft(
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
       );
 
       const error = new httpErrors.NotFound();
       error.getTags = () => ["OtherTag"];
-      dispatch(handleError(error, failRaft));
+      dispatch(handleError(error, failraft));
 
       expect(
         options.trackErrorEvent,
@@ -69,13 +69,13 @@ describe("handleError", () => {
     });
 
     it("should not report any handler missing", () => {
-      const failRaft = new Failraft(
+      const failraft = new Failraft(
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
       );
       const error = new httpErrors.NotFound();
 
-      dispatch(handleError(error, failRaft));
+      dispatch(handleError(error, failraft));
 
       expect(options.reportMissingHandler, "was not called");
     });
@@ -86,8 +86,8 @@ describe("handleError", () => {
       const error = new httpErrors.BadRequest();
       error.getTags = () => ["OtherTag"];
 
-      const failRaft = new Failraft({}, store);
-      dispatch(handleError(error, failRaft));
+      const failraft = new Failraft({}, store);
+      dispatch(handleError(error, failraft));
 
       expect(
         options.trackErrorEvent,
@@ -100,8 +100,8 @@ describe("handleError", () => {
       const error = new httpErrors.BadRequest();
       error.getTags = () => ["OtherTag"];
 
-      const failRaft = new Failraft({}, store);
-      dispatch(handleError(error, failRaft));
+      const failraft = new Failraft({}, store);
+      dispatch(handleError(error, failraft));
 
       expect(
         options.reportMissingHandler,
@@ -114,7 +114,7 @@ describe("handleError", () => {
     });
 
     it("should always issue an event and crash report on an unknown failure", () => {
-      const failRaft = new Failraft(
+      const failraft = new Failraft(
         { "*": () => ({ type: "@error/CATCH_ALL" }) },
         store
       );
@@ -124,7 +124,7 @@ describe("handleError", () => {
       });
 
       const error = new Error();
-      dispatch(handleError(error, failRaft));
+      dispatch(handleError(error, failraft));
 
       expect(
         options.trackErrorEvent,
@@ -143,7 +143,7 @@ describe("handleError", () => {
     });
 
     it("should always issue an event and crash report on an abnormal failure", () => {
-      const failRaft = new Failraft(
+      const failraft = new Failraft(
         { "*": () => ({ type: "@error/CATCH_ALL" }) },
         store
       );
@@ -153,7 +153,7 @@ describe("handleError", () => {
       });
 
       const error = new TypeError();
-      dispatch(handleError(error, failRaft));
+      dispatch(handleError(error, failraft));
 
       expect(
         options.trackErrorEvent,
@@ -178,9 +178,9 @@ describe("handleError", () => {
         OtherTag: () => ({ type: "@error/OTHER_TAG" })
       };
 
-      const failRaft = new Failraft({}, store);
+      const failraft = new Failraft({}, store);
 
-      dispatch(handleError(error, failRaft, extendedHandlers), "to be true");
+      dispatch(handleError(error, failraft, extendedHandlers), "to be true");
     });
 
     it("should allow them to be supplied by a function on the error", () => {
@@ -192,9 +192,9 @@ describe("handleError", () => {
         OtherTag: () => ({ type: "@error/OTHER_TAG" })
       };
 
-      const failRaft = new Failraft({}, store);
+      const failraft = new Failraft({}, store);
 
-      dispatch(handleError(error, failRaft), "to be true");
+      dispatch(handleError(error, failraft), "to be true");
     });
   });
 });
