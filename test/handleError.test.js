@@ -13,7 +13,6 @@ const expect = unexpected.clone().use(unexpectedSinon);
 
 describe("handleError", () => {
   let options;
-  let dispatch;
   let store;
 
   beforeEach(() => {
@@ -28,7 +27,6 @@ describe("handleError", () => {
       }
     };
     store = createStore(state => state, intialState, applyMiddleware(thunk));
-    dispatch = sinon.spy(store, "dispatch");
   });
 
   describe("with warnings", () => {
@@ -40,7 +38,7 @@ describe("handleError", () => {
       const handleError = createHandleError({ ...options, failraft });
 
       const error = new httpErrors.NotFound();
-      dispatch(handleError(error));
+      handleError(error);
 
       expect(
         options.trackErrorEvent,
@@ -58,7 +56,7 @@ describe("handleError", () => {
 
       const error = new httpErrors.NotFound();
       error.getTags = () => ["OtherTag"];
-      dispatch(handleError(error));
+      handleError(error);
 
       expect(
         options.trackErrorEvent,
@@ -75,7 +73,7 @@ describe("handleError", () => {
       const handleError = createHandleError({ ...options, failraft });
 
       const error = new httpErrors.NotFound();
-      dispatch(handleError(error));
+      handleError(error);
 
       expect(options.reportMissingHandler, "was not called");
     });
@@ -88,7 +86,7 @@ describe("handleError", () => {
 
       const error = new httpErrors.BadRequest();
       error.getTags = () => ["OtherTag"];
-      dispatch(handleError(error));
+      handleError(error);
 
       expect(
         options.trackErrorEvent,
@@ -103,7 +101,7 @@ describe("handleError", () => {
 
       const error = new httpErrors.BadRequest();
       error.getTags = () => ["OtherTag"];
-      dispatch(handleError(error));
+      handleError(error);
 
       expect(
         options.reportMissingHandler,
@@ -127,7 +125,7 @@ describe("handleError", () => {
       });
 
       const error = new Error();
-      dispatch(handleError(error));
+      handleError(error);
 
       expect(
         options.trackErrorEvent,
@@ -157,7 +155,7 @@ describe("handleError", () => {
       });
 
       const error = new TypeError();
-      dispatch(handleError(error));
+      handleError(error);
 
       expect(
         options.trackErrorEvent,
@@ -184,10 +182,15 @@ describe("handleError", () => {
       const error = new httpErrors.NotFound();
       error.getTags = () => ["OtherTag"];
       const extendedHandlers = {
-        OtherTag: () => ({ type: "@error/OTHER_TAG" })
+        OtherTag: sinon
+          .stub()
+          .named("OtherTag")
+          .returns({ type: "@error/OTHER_TAG" })
       };
 
-      dispatch(handleError(error, extendedHandlers), "to be true");
+      handleError(error, extendedHandlers);
+
+      expect(extendedHandlers.OtherTag, "was called");
     });
 
     it("should allow them to be supplied by a function on the error", () => {
@@ -198,13 +201,18 @@ describe("handleError", () => {
       });
 
       const extendedHandlers = {
-        OtherTag: () => ({ type: "@error/OTHER_TAG" })
+        OtherTag: sinon
+          .stub()
+          .named("OtherTag")
+          .returns({ type: "@error/OTHER_TAG" })
       };
       const error = new httpErrors.NotFound();
       error.getHandlers = () => extendedHandlers;
       error.getTags = () => ["OtherTag"];
 
-      dispatch(handleError(error), "to be true");
+      handleError(error, extendedHandlers);
+
+      expect(extendedHandlers.OtherTag, "was called");
     });
   });
 });
