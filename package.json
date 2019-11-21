@@ -2,7 +2,7 @@
   "name": "failraft",
   "version": "0.0.0",
   "description": "",
-  "main": "lib/reduxMiddleware.js",
+  "main": "lib/Failraft.js",
   "scripts": {
     "coverage": "nyc --reporter=lcov --reporter=text npm test",
     "lint": "eslint . && prettier --check '**/*.js'",
