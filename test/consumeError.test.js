@@ -7,11 +7,11 @@ const httpErrors = require("httperrors");
 
 const Failraft = require("../lib/Failraft");
 
-const createHandleError = require("../lib/handleError");
+const createConsumeError = require("../lib/consumeError");
 
 const expect = unexpected.clone().use(unexpectedSinon);
 
-describe("handleError", () => {
+describe("consumeError", () => {
   let options;
   let store;
 
@@ -35,7 +35,7 @@ describe("handleError", () => {
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
       );
-      const handleError = createHandleError({ ...options, failraft });
+      const handleError = createConsumeError({ ...options, failraft });
 
       const error = new httpErrors.NotFound();
       handleError(error);
@@ -52,7 +52,7 @@ describe("handleError", () => {
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
       );
-      const handleError = createHandleError({ ...options, failraft });
+      const handleError = createConsumeError({ ...options, failraft });
 
       const error = new httpErrors.NotFound();
       error.getTags = () => ["OtherTag"];
@@ -70,7 +70,7 @@ describe("handleError", () => {
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
       );
-      const handleError = createHandleError({ ...options, failraft });
+      const handleError = createConsumeError({ ...options, failraft });
 
       const error = new httpErrors.NotFound();
       handleError(error);
@@ -82,7 +82,7 @@ describe("handleError", () => {
   describe("with a missing handler", () => {
     it("should track an error error", () => {
       const failraft = new Failraft({}, store);
-      const handleError = createHandleError({ ...options, failraft });
+      const handleError = createConsumeError({ ...options, failraft });
 
       const error = new httpErrors.BadRequest();
       error.getTags = () => ["OtherTag"];
@@ -97,7 +97,7 @@ describe("handleError", () => {
 
     it("should report a missing handler", () => {
       const failraft = new Failraft({}, store);
-      const handleError = createHandleError({ ...options, failraft });
+      const handleError = createConsumeError({ ...options, failraft });
 
       const error = new httpErrors.BadRequest();
       error.getTags = () => ["OtherTag"];
@@ -118,7 +118,7 @@ describe("handleError", () => {
         { "*": () => ({ type: "@error/CATCH_ALL" }) },
         store
       );
-      const handleError = createHandleError({
+      const handleError = createConsumeError({
         ...options,
         failraft,
         determineErrorTags: () => ["UnknownFailure"]
@@ -148,7 +148,7 @@ describe("handleError", () => {
         { "*": () => ({ type: "@error/CATCH_ALL" }) },
         store
       );
-      const handleError = createHandleError({
+      const handleError = createConsumeError({
         ...options,
         failraft,
         determineErrorTags: error => [error.name, "AbnormalFailure"]
@@ -174,7 +174,7 @@ describe("handleError", () => {
   describe("when extending handlers", () => {
     it("should allow them to be supplied as an argument to handleError", () => {
       const failraft = new Failraft({}, store);
-      const handleError = createHandleError({
+      const handleError = createConsumeError({
         ...options,
         failraft
       });
@@ -195,7 +195,7 @@ describe("handleError", () => {
 
     it("should allow them to be supplied by a function on the error", () => {
       const failraft = new Failraft({}, store);
-      const handleError = createHandleError({
+      const handleError = createConsumeError({
         ...options,
         failraft
       });

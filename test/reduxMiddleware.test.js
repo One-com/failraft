@@ -4,6 +4,7 @@ const sinon = require("sinon");
 const unexpected = require("unexpected");
 const unexpectedSinon = require("unexpected-sinon");
 
+const Failraft = require("../lib/Failraft");
 const errorHandlerMiddleware = require("../lib/reduxMiddleware");
 const { errorWasSeenSymbol } = errorHandlerMiddleware;
 
@@ -20,10 +21,7 @@ describe("error handling middleware", () => {
     const nextSpy = sinon.spy().named("next");
 
     const store = createStoreWithMiddlewares(
-      errorHandlerMiddleware(
-        {},
-        { determineErrorTags: error => [error.message] }
-      ),
+      errorHandlerMiddleware(new Failraft()),
       store => next => action => nextSpy(action)
     );
 
@@ -39,8 +37,9 @@ describe("error handling middleware", () => {
     };
     const store = createStoreWithMiddlewares(
       errorHandlerMiddleware(
-        {},
-        { determineErrorTags: error => [error.message] }
+        new Failraft(null, {
+          determineErrorTags: error => [error.message]
+        })
       ),
       thunk,
       throwingMiddleware
@@ -63,10 +62,9 @@ describe("error handling middleware", () => {
       const lastMiddlewareSpy = sinon.spy().named("next");
 
       const store = createStoreWithMiddlewares(
-        errorHandlerMiddleware(
-          {},
-          { determineErrorTags: error => [error.message] }
-        ),
+        errorHandlerMiddleware(new Failraft(), {
+          determineErrorTags: error => [error.message]
+        }),
         thunk,
         store => next => action => lastMiddlewareSpy(action)
       );
@@ -87,9 +85,11 @@ describe("error handling middleware", () => {
         THROWN_BAD_NEWS: handlerStub
       };
       const store = createStoreWithMiddlewares(
-        errorHandlerMiddleware(errorRoutes, {
-          determineErrorTags: error => [error.message]
-        }),
+        errorHandlerMiddleware(
+          new Failraft(errorRoutes, {
+            determineErrorTags: error => [error.message]
+          })
+        ),
         thunk
       );
 
@@ -105,8 +105,7 @@ describe("error handling middleware", () => {
     it("should return a resolved Promise", async () => {
       const store = createStoreWithMiddlewares(
         errorHandlerMiddleware(
-          {},
-          { determineErrorTags: error => [error.message] }
+          new Failraft(null, { determineErrorTags: error => [error.message] })
         ),
         thunk
       );
@@ -125,9 +124,11 @@ describe("error handling middleware", () => {
       const error = new Error("REJECTION");
       const errorRoutes = { REJECTION: () => handlerStub };
       const store = createStoreWithMiddlewares(
-        errorHandlerMiddleware(errorRoutes, {
-          determineErrorTags: error => [error.message]
-        }),
+        errorHandlerMiddleware(
+          new Failraft(errorRoutes, {
+            determineErrorTags: error => [error.message]
+          })
+        ),
         thunk
       );
       const result = store.dispatch(() => {
@@ -151,9 +152,11 @@ describe("error handling middleware", () => {
       const errorRoutes = { HANDLE_ME_PLEASE: () => handlerStub };
 
       const store = createStoreWithMiddlewares(
-        errorHandlerMiddleware(errorRoutes, {
-          determineErrorTags: error => [error.message]
-        }),
+        errorHandlerMiddleware(
+          new Failraft(errorRoutes, {
+            determineErrorTags: error => [error.message]
+          })
+        ),
         thunk
       );
 
@@ -171,11 +174,10 @@ describe("error handling middleware", () => {
       const trackErrorEvent = sinon.stub().named("trackErrorEvent");
       const store = createStoreWithMiddlewares(
         errorHandlerMiddleware(
-          {},
-          {
+          new Failraft(null, {
             determineErrorTags: error => [error.message],
             trackErrorEvent
-          }
+          })
         ),
         thunk
       );
@@ -199,8 +201,7 @@ describe("error handling middleware", () => {
 
       const store = createStoreWithMiddlewares(
         errorHandlerMiddleware(
-          {},
-          { determineErrorTags: error => [error.message] }
+          new Failraft(null, { determineErrorTags: error => [error.message] })
         ),
         store => next => action => nextSpy(action)
       );
@@ -223,9 +224,11 @@ describe("error handling middleware", () => {
       const errorRoutes = { HANDLE_ME_PLEASE: () => handlerStub };
 
       const store = createStoreWithMiddlewares(
-        errorHandlerMiddleware(errorRoutes, {
-          determineErrorTags: error => [error.message]
-        }),
+        errorHandlerMiddleware(
+          new Failraft(errorRoutes, {
+            determineErrorTags: error => [error.message]
+          })
+        ),
         thunk.withExtraArgument({ trackEvent: () => {} })
       );
 
@@ -262,8 +265,7 @@ describe("error handling middleware", () => {
         reducerSpy,
         applyMiddleware(
           errorHandlerMiddleware(
-            {},
-            { determineErrorTags: error => [error.message] }
+            new Failraft(null, { determineErrorTags: error => [error.message] })
           ),
           thunk.withExtraArgument({ trackEvent: () => {} })
         )

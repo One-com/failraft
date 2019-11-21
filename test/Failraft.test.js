@@ -7,7 +7,7 @@ const Failraft = require("../lib/Failraft");
 const expect = unexpected.clone().use(unexpectedSinon);
 
 describe("Failraft", () => {
-  it("should error if no dispatch function was supplied", () => {
+  it.skip("should error if no dispatch function was supplied", () => {
     return expect(
       () => {
         // eslint-disable-next-line no-new
@@ -28,12 +28,12 @@ describe("Failraft", () => {
     const expectedError = new Error("Any old error");
 
     const failraft = new Failraft(null, context);
-    failraft.attachErrorRouted(error => error);
+    failraft.onErrorRouted = sinon.stub().named("onErrorRouted");
 
     return expect(() => {
       failraft.routeError(["AnError"], expectedError);
     }, "not to error").then(() => {
-      expect(context.dispatch, "was called");
+      expect(failraft.onErrorRouted, "was called");
     });
   });
 
@@ -81,14 +81,32 @@ describe("Failraft", () => {
     });
   });
 
+  describe("with a store attached", () => {
+    it("should throw on an invalid store", () => {
+      expect(
+        () => {
+          new Failraft(null).attachStore(null);
+        },
+        "to throw",
+        "Context did not contain a dispatch function."
+      );
+    });
+
+    it("should throw on an attempt to attach a second time", () => {
+      expect(
+        () => {
+          new Failraft(null)
+            .attachStore({ dispatch: () => {} })
+            .attachStore({ dispatch: () => {} });
+        },
+        "to throw",
+        "Context already bound to a dispatch function."
+      );
+    });
+  });
+
   describe("with aliased errors", () => {
-    it("should dispatch correctly with string aliases", () => {
-      const context = {
-        dispatch: error => {
-          expect(error, "to be", "AN_ERROR");
-        }
-      };
-      sinon.spy(context, "dispatch");
+    it("should route correctly with string aliases", () => {
       const errorRoutes = {
         AnError: sinon
           .stub()
@@ -98,7 +116,7 @@ describe("Failraft", () => {
       };
       const expectedError = new Error("OtherError");
 
-      const failraft = new Failraft(errorRoutes, context);
+      const failraft = new Failraft(errorRoutes);
 
       return expect(() => {
         failraft.routeError(["OtherError"], expectedError);
@@ -108,16 +126,35 @@ describe("Failraft", () => {
         ]);
       });
     });
+
+    it("should dispatch correctly with string aliases", () => {
+      const context = {
+        dispatch: sinon.stub().named("dispatch")
+      };
+      const errorRoutes = {
+        AnError: sinon
+          .stub()
+          .named("anErrorHandler")
+          .returns({ type: "@handler/AN_ERROR" }),
+        OtherError: "AnError"
+      };
+      const expectedError = new Error("OtherError");
+
+      const failraft = new Failraft(errorRoutes);
+      failraft.attachStore(context);
+
+      return expect(() => {
+        failraft.routeError(["OtherError"], expectedError);
+      }, "not to error").then(() => {
+        expect(context.dispatch, "to have a call satisfying", [
+          { type: "@handler/AN_ERROR" }
+        ]);
+      });
+    });
   });
 
   describe("when extended", () => {
     it("should dispatch the identified handler", () => {
-      const context = {
-        dispatch: error => {
-          expect(error, "to be", "SOMETHING_ELSE");
-        }
-      };
-      sinon.spy(context, "dispatch");
       const errorRoutes = {
         "*": error => error
       };
@@ -128,9 +165,7 @@ describe("Failraft", () => {
           .returns("SOMETHING_ELSE")
       };
 
-      const failraft = new Failraft(errorRoutes, context).extend(
-        errorRoutesExtension
-      );
+      const failraft = new Failraft(errorRoutes).extend(errorRoutesExtension);
 
       const expectedError = new Error("AnError");
 
@@ -139,6 +174,32 @@ describe("Failraft", () => {
       }, "not to error").then(() => {
         expect(errorRoutesExtension.AnError, "to have a call satisfying", [
           expectedError
+        ]);
+      });
+    });
+
+    it("should attach a previously registered store", () => {
+      const context = {
+        dispatch: sinon.stub().named("dispatch")
+      };
+      const errorRoutes = {
+        "*": error => error
+      };
+      const errorRoutesExtension = {
+        AnError: () => ({ type: "@handler/MY_EXTENDED_HANDLER" })
+      };
+
+      const parent = new Failraft(errorRoutes);
+      parent.attachStore(context);
+      const failraft = parent.extend(errorRoutesExtension);
+
+      const expectedError = new Error("AnError");
+
+      return expect(() => {
+        failraft.routeError(["AnError"], expectedError);
+      }, "not to error").then(() => {
+        expect(context.dispatch, "to have a call satisfying", [
+          { type: "@handler/MY_EXTENDED_HANDLER" }
         ]);
       });
     });
