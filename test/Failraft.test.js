@@ -7,6 +7,16 @@ const Failraft = require("../lib/Failraft");
 const expect = unexpected.clone().use(unexpectedSinon);
 
 describe("Failraft", () => {
+  it("should throw if determineErrorTags was not a function", () => {
+    expect(
+      () => {
+        new Failraft(null, { determineErrorTags: null });
+      },
+      "to throw",
+      'The "determineErrorTags" function must be supplied.'
+    );
+  });
+
   it("should report missing handlers", () => {
     const expectedError = new Error("Any old error");
 

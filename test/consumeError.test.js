@@ -29,6 +29,16 @@ describe("consumeError", () => {
     store = createStore(state => state, intialState, applyMiddleware(thunk));
   });
 
+  it("should throw if determineErrorTags was not a function", () => {
+    expect(
+      () => {
+        createConsumeError({ determineErrorTags: null });
+      },
+      "to throw",
+      'The "determineErrorTags" function must be supplied.'
+    );
+  });
+
   describe("with warnings", () => {
     it("should issue a warning event if a known failure was handled", () => {
       const failraft = new Failraft(
