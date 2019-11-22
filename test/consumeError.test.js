@@ -43,7 +43,7 @@ describe("consumeError", () => {
       expect(
         options.trackErrorEvent,
         "to have a call exhaustively satisfying",
-        [error, ["NotFound"], false]
+        [error, ["NotFound"], true]
       );
     });
 
@@ -61,11 +61,11 @@ describe("consumeError", () => {
       expect(
         options.trackErrorEvent,
         "to have a call exhaustively satisfying",
-        [error, ["NotFound", "OtherTag"], false]
+        [error, ["NotFound", "OtherTag"], true]
       );
     });
 
-    it("should not report any handler missing", () => {
+    it("should not report the handler missing", () => {
       const failraft = new Failraft(
         { NotFound: () => ({ type: "@error/NOT_FOUND" }) },
         store
@@ -75,12 +75,16 @@ describe("consumeError", () => {
       const error = new httpErrors.NotFound();
       handleError(error);
 
-      expect(options.reportMissingHandler, "was not called");
+      expect(options.trackErrorEvent, "to have a call satisfying", [
+        error,
+        expect.it("not to contain", "MissingHandler"),
+        true
+      ]);
     });
   });
 
   describe("with a missing handler", () => {
-    it("should track an error error", () => {
+    it("should report the handler missing", () => {
       const failraft = new Failraft({}, store);
       const handleError = createConsumeError({ ...options, failraft });
 
@@ -91,82 +95,11 @@ describe("consumeError", () => {
       expect(
         options.trackErrorEvent,
         "to have a call exhaustively satisfying",
-        [error, ["BadRequest", "OtherTag", "MissingHandler"], true]
-      );
-    });
-
-    it("should report a missing handler", () => {
-      const failraft = new Failraft({}, store);
-      const handleError = createConsumeError({ ...options, failraft });
-
-      const error = new httpErrors.BadRequest();
-      error.getTags = () => ["OtherTag"];
-      handleError(error);
-
-      expect(
-        options.reportMissingHandler,
-        "to have a call exhaustively satisfying",
         [
           expect.it("to be", error).and("not to have property", "getTags"),
-          ["BadRequest", "OtherTag", "MissingHandler"]
+          expect.it("to contain", "MissingHandler"),
+          false
         ]
-      );
-    });
-
-    it("should always issue an event and crash report on an unknown failure", () => {
-      const failraft = new Failraft(
-        { "*": () => ({ type: "@error/CATCH_ALL" }) },
-        store
-      );
-      const handleError = createConsumeError({
-        ...options,
-        failraft,
-        determineErrorTags: () => ["UnknownFailure"]
-      });
-
-      const error = new Error();
-      handleError(error);
-
-      expect(
-        options.trackErrorEvent,
-        "to have a call exhaustively satisfying",
-        [error, ["UnknownFailure"], true]
-      );
-
-      expect(
-        options.reportMissingHandler,
-        "to have a call exhaustively satisfying",
-        [
-          expect.it("to be", error).and("not to have property", "getTags"),
-          ["UnknownFailure"]
-        ]
-      );
-    });
-
-    it("should always issue an event and crash report on an abnormal failure", () => {
-      const failraft = new Failraft(
-        { "*": () => ({ type: "@error/CATCH_ALL" }) },
-        store
-      );
-      const handleError = createConsumeError({
-        ...options,
-        failraft,
-        determineErrorTags: error => [error.name, "AbnormalFailure"]
-      });
-
-      const error = new TypeError();
-      handleError(error);
-
-      expect(
-        options.trackErrorEvent,
-        "to have a call exhaustively satisfying",
-        [error, ["TypeError", "AbnormalFailure"], true]
-      );
-
-      expect(
-        options.reportMissingHandler,
-        "to have a call exhaustively satisfying",
-        [expect.it("to be", error), ["TypeError", "AbnormalFailure"]]
       );
     });
   });
