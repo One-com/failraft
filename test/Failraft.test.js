@@ -7,27 +7,10 @@ const Failraft = require("../lib/Failraft");
 const expect = unexpected.clone().use(unexpectedSinon);
 
 describe("Failraft", () => {
-  it.skip("should error if no dispatch function was supplied", () => {
-    return expect(
-      () => {
-        // eslint-disable-next-line no-new
-        new Failraft({}, {});
-      },
-      "to throw",
-      "Context did not contain a dispatch function."
-    );
-  });
-
   it("should report missing handlers", () => {
-    const context = {
-      dispatch: error => {
-        expect(error, "to be", expectedError);
-      }
-    };
-    sinon.spy(context, "dispatch");
     const expectedError = new Error("Any old error");
 
-    const failraft = new Failraft(null, context);
+    const failraft = new Failraft();
     failraft.onErrorRouted = sinon.stub().named("onErrorRouted");
 
     return expect(() => {
@@ -38,11 +21,6 @@ describe("Failraft", () => {
   });
 
   it("should dispatch the identified handler", () => {
-    const context = {
-      dispatch: error => {
-        expect(error, "to be", expectedError);
-      }
-    };
     const errorRoutes = {
       "*": sinon
         .stub()
@@ -51,33 +29,12 @@ describe("Failraft", () => {
     };
     const expectedError = new Error("Any old error");
 
-    const failraft = new Failraft(errorRoutes, context);
+    const failraft = new Failraft(errorRoutes);
 
     return expect(() => {
       failraft.routeError(["AnError"], expectedError);
     }, "not to error").then(() => {
       expect(errorRoutes["*"], "to have a call satisfying", [expectedError]);
-    });
-  });
-
-  it("should allow ignoring error handlers for dispatch the return falsy", () => {
-    const context = {
-      dispatch: arg => {
-        expect(arg, "to be undefined");
-      }
-    };
-    sinon.spy(context, "dispatch");
-    const errorRoutes = {
-      IgnoreMe: () => {}
-    };
-    const expectedError = new Error("Any old error");
-
-    const failraft = new Failraft(errorRoutes, context);
-
-    return expect(() => {
-      failraft.routeError(["IgnoredError"], expectedError);
-    }, "not to error").then(() => {
-      expect(context.dispatch, "was not called");
     });
   });
 
@@ -102,6 +59,25 @@ describe("Failraft", () => {
         "to throw",
         "Context already bound to a dispatch function."
       );
+    });
+
+    it("should allow ignoring error handlers if the handler returns falsy", () => {
+      const context = {
+        dispatch: sinon.stub().named("dispatch")
+      };
+      const errorRoutes = {
+        IgnoreMe: () => null
+      };
+      const expectedError = new Error("Any old error");
+
+      const failraft = new Failraft(errorRoutes);
+      failraft.attachStore(context);
+
+      return expect(() => {
+        failraft.routeError(["IgnoreMe"], expectedError);
+      }, "not to error").then(() => {
+        expect(context.dispatch, "was not called");
+      });
     });
   });
 
