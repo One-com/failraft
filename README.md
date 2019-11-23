@@ -94,6 +94,20 @@ In practice, that actions representing errors look something like:
 { type: 'SOME_FAILURE', error: new Error(), errorAction: true }
 ```
 
+If actions that count as errors have a different structure in your redux
+store, the `identifyErrorAction` function can be supplied to the middleware
+to customise this. The example below matches error actions by type name:
+
+```js
+{ type: '@ERROR/some_condition', error: new Error() }
+
+const customMiddleware = new Failraft({
+  /* error routes */
+}).createReduxMiddleware({
+  identifyErrorAction: action => action.type.startsWith('@ERROR/')
+})
+```
+
 ## Triggering errors
 
 In order for an error error handled correctly we must provide Failraft with a
