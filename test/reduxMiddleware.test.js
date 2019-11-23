@@ -57,6 +57,21 @@ describe("error handling middleware", () => {
     expect(handlerStub, "to have a call satisfying", [error]);
   });
 
+  it("should allow customising how error actions are identified", () => {
+    const failraft = new Failraft();
+    failraft.onErrorRouted = sinon.spy().named("onErrorRouted");
+
+    const store = createStoreWithMiddlewares(
+      errorHandlerMiddleware(failraft, {
+        idenfityErrorAction: action => action.type.startsWith("ErroR")
+      })
+    );
+
+    store.dispatch({ type: "ErroR_foo", error: new Error() });
+
+    expect(failraft.onErrorRouted, "was called");
+  });
+
   describe("with a thunk", () => {
     it("should pass thunk actions on to further middleware", () => {
       const lastMiddlewareSpy = sinon.spy().named("next");
