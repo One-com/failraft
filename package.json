@@ -1,7 +1,7 @@
 {
   "name": "failraft",
   "version": "0.1.0",
-  "description": "",
+  "description": "Error handler for redux.",
   "main": "lib/Failraft.js",
   "files": [
     "lib"
@@ -11,7 +11,11 @@
     "lint": "eslint . && prettier --check '**/*.js'",
     "test": "mocha"
   },
-  "keywords": [],
+  "keywords": [
+    "error",
+    "handler",
+    "redux"
+  ],
   "author": "Alex J Burke @alexjeffburke <ajb@one.com>",
   "repository": "git://github.com/One-com/failraft",
   "license": "BSD-3-Clause",
